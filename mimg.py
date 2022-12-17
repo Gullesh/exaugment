@@ -39,6 +39,8 @@ parser.add_argument('--epochs', default=75, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
+parser.add_argument('--re', action='store_true', default=False,
+                    help='apply cutout')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
@@ -232,15 +234,15 @@ def main_worker(gpu, ngpus_per_node, args):
         valdir = os.path.join(args.data, 'val')
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
-
+        train_transform = transforms.Compose([])
+        train_transform.transforms.append(transforms.RandomResizedCrop(224))
+        train_transform.transforms.append(transforms.RandomHorizontalFlip())
+        train_transform.transforms.append(transforms.ToTensor())
+        train_transform.transforms.append(normalize)
+        if args.re:
+            train_transform.transforms.append(transforms.RandomErasing(p=0.5))
         train_dataset = datasets.ImageFolder(
-            traindir,
-            transforms.Compose([
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-            ]))
+            traindir, train_transform)
 
         val_dataset = datasets.ImageFolder(
             valdir,
