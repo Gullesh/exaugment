@@ -334,7 +334,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
         # move data to the same device as model
         images = images.to(device, non_blocking=True)
         target = target.to(device, non_blocking=True)
-        if args.gbox:
+        if args.igbox:
             images = igradbox(model,images,target,p=args.pexp, length = args.length,rescle=args.rescle, arng=args.arng,sal=args.sal)
         # compute output
         output = model(images)
