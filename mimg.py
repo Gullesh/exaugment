@@ -20,6 +20,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import Subset
+from util.gradient import igradbox
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -41,6 +42,17 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--re', action='store_true', default=False,
                     help='apply cutout')
+parser.add_argument('--igbox', action='store_true', default=False,
+                    help='apply GradCAM')
+parser.add_argument('--sal', action='store_true', default=False,
+                    help='if True only keep the salient part')
+parser.add_argument('--rescle', action='store_true', default=False,
+                    help='scaling random erasing')
+parser.add_argument('--length', type=int, default=16,
+                    help='length of the edge')
+parser.add_argument('--pexp', type=float, default=0.25, help='chance of explainablity augmentation happening')
+parser.add_argument('--arng', nargs="+", type=int,help= 'the range of image areas(%) to be removed')
+
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
@@ -318,11 +330,12 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
-
+        
         # move data to the same device as model
         images = images.to(device, non_blocking=True)
         target = target.to(device, non_blocking=True)
-
+        if args.gbox:
+            images = igradbox(model,images,target,p=args.pexp, length = args.length,rescle=args.rescle, arng=args.arng,sal=args.sal)
         # compute output
         output = model(images)
         loss = criterion(output, target)
