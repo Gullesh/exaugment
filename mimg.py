@@ -157,6 +157,7 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
+    model.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias = False)
 
     if not torch.cuda.is_available() and not torch.backends.mps.is_available():
         print('using CPU, this will be slow')
@@ -247,7 +248,7 @@ def main_worker(gpu, ngpus_per_node, args):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
         train_transform = transforms.Compose([])
-        train_transform.transforms.append(transforms.RandomResizedCrop(224))
+        train_transform.transforms.append(transforms.Resize((32,32)))
         train_transform.transforms.append(transforms.RandomHorizontalFlip())
         train_transform.transforms.append(transforms.ToTensor())
         train_transform.transforms.append(normalize)
@@ -259,8 +260,7 @@ def main_worker(gpu, ngpus_per_node, args):
         val_dataset = datasets.ImageFolder(
             valdir,
             transforms.Compose([
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
+                transforms.Resize((32,32)),
                 transforms.ToTensor(),
                 normalize,
             ]))
