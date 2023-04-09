@@ -21,6 +21,7 @@ import torchvision.transforms as transforms
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import Subset
 from util.gradient import igradbox
+from util.cutout import Cutout
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -41,6 +42,8 @@ parser.add_argument('--epochs', default=75, type=int, metavar='N',
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--re', action='store_true', default=False,
+                    help='apply cutout')
+parser.add_argument('--cutout', action='store_true', default=False,
                     help='apply cutout')
 parser.add_argument('--igbox', action='store_true', default=False,
                     help='apply GradCAM')
@@ -254,6 +257,8 @@ def main_worker(gpu, ngpus_per_node, args):
         train_transform.transforms.append(normalize)
         if args.re:
             train_transform.transforms.append(transforms.RandomErasing(p=0.5))
+        if args.cutout:
+            train_transform.transforms.append(Cutout(p=args.pexp, rescle=args.rescle))
         train_dataset = datasets.ImageFolder(
             traindir, train_transform)
 
